@@ -22,10 +22,9 @@
       });
       material.map.needsUpdate = true;
       var map = new THREE.Mesh(geometry, material);
-      map.position.z = 100;
+      map.position.z = -100;
       scene.add(map);
 
-      var dotGeom = new THREE.SphereGeometry(1, 10, 5);
       var dotMaterial = new THREE.MeshBasicMaterial({ color: 0xe234da });
 
       function refreshDots(olddots) {
@@ -41,13 +40,16 @@
             $.each(data, function(idx, val) {
               var curTime = data[idx].time;
               var distance = (firstTime - curTime) / 1000000;
-              dot.position.copy(new THREE.Vector3(lon, lat, 100 - ));
-              var dot = new THREE.Mesh(dotGeom, dotMaterial)
-              var lat = val.location.lat * 100 / 180;
-              var lon = val.location.long * 50 / 90;
-              dot.name = val.time
-              scene.add(dot);
-              newdots[idx] = dot;
+              if (distance < 200) {
+                var dotGeom = new THREE.SphereGeometry(0.01 + distance / 200, 10, 5);
+                var dot = new THREE.Mesh(dotGeom, dotMaterial)
+                var lat = val.location.lat * 100 / 180;
+                var lon = val.location.long * 50 / 90;
+                dot.position.copy(new THREE.Vector3(lon, lat, 100 - distance));
+                dot.name = val.time
+                scene.add(dot);
+                newdots[idx] = dot;
+              }
             });
             setTimeout(refreshDots, 10000, newdots);
           }).fail(function() {
