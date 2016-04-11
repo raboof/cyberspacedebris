@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="5 seconds">
+
+  <logger name="cyberspacedebris" level="DEBUG" />
+  <logger name="akka.io.TcpListener" level="INFO" />
+
+  <root level="INFO">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <filter class="cyberspacedebris.BindLoggingFilter"/>
+      <target>System.out</target>
+      <encoder>
+        <pattern>%d{ISO8601} %-5level [%logger{0}] - %X{akkaSource} - %msg%n</pattern>
+      </encoder>
+    </appender>
+  </root>
+</configuration>
