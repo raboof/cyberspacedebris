@@ -40,6 +40,8 @@ class ConnectionActor(remote: InetSocketAddress, local: InetSocketAddress, conne
   log.debug(s"Got connection on port ${local.getPort}")
   context.setReceiveTimeout(5 seconds)
 
+  var dataSoFar: Array[Byte] = Array.empty
+
   def receive: Receive = initial
   def initial: Receive = data orElse close orElse sendOnTimeout()
   def received(proto: Option[String]): Receive = data orElse close orElse sendOnTimeout(proto)
@@ -55,6 +57,7 @@ class ConnectionActor(remote: InetSocketAddress, local: InetSocketAddress, conne
       response(local.getPort, proto)._1.foreach(
         (fast: String) => connection ! Write(ByteString(fast))
       )
+      dataSoFar = dataSoFar ++ data
       context.become(received(proto))
   }
 
@@ -83,6 +86,6 @@ class ConnectionActor(remote: InetSocketAddress, local: InetSocketAddress, conne
 
   def report(proto: Option[String]) = {
     val protocol = proto.orElse { servicesByPort.get(local.getPort) }
-    context.system.eventStream.publish(Event(protocol, remote, local))
+    context.system.eventStream.publish(Event(protocol, remote, local, if (dataSoFar == Array.empty) None else Some(dataSoFar)))
   }
 }

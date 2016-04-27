@@ -49,7 +49,7 @@ trait Routes extends StorageProvider
     with SprayJsonSupport
     with DefaultJsonProtocol {
   implicit val locationFormat = jsonFormat3(Storage.Location.apply)
-  implicit val eventFormat = jsonFormat3(Storage.StoredEvent.apply)
+  implicit val eventFormat = jsonFormat4(Storage.StoredEvent.apply)
   implicit val timeout: Timeout = 5 seconds
 
   val routes = path("events") {

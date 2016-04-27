@@ -12,7 +12,7 @@ class EventLoggingActor(geoIp: MaxMindIpGeo) extends Actor
   context.system.eventStream.subscribe(self, classOf[Event])
 
   override def receive = {
-    case Event(protocol, remote, local) =>
+    case Event(protocol, remote, local, _) =>
       val location = geoIp.getLocation(remote.getAddress.getHostAddress)
       val loc = location.map(" from " + _).getOrElse("")
       log.info(s"${protocol.map(_ + " ").getOrElse("")}connection$loc (${remote.getAddress.getHostAddress}) on port ${local.getPort}")
