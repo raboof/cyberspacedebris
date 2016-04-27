@@ -40,11 +40,11 @@
               var curTime = data[idx].time;
               var distance = (firstTime - curTime) / 1000000;
               if (distance < 200) {
-                var dotGeom = new THREE.SphereGeometry(0.01 + distance / 200, 10, 5);
+                var dotGeom = new THREE.SphereGeometry(1 - (0.01 + distance / 200), 10, 5);
                 var dot = new THREE.Mesh(dotGeom, dotMaterial)
                 var lat = val.location.lat * 100 / 180;
                 var lon = val.location.long * 50 / 90;
-                dot.position.copy(new THREE.Vector3(lon, lat, 100 - distance));
+                dot.position.copy(new THREE.Vector3(lon, lat, distance - 100));
                 dot.name = val.time
                 scene.add(dot);
                 newdots[idx] = dot;
