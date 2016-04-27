@@ -1,6 +1,10 @@
 package cyberspacedebris
 
+import scala.concurrent.duration._
+
 import akka.actor._
+import akka.pattern._
+import akka.util._
 import akka.stream._
 import akka.stream.scaladsl._
 
@@ -19,49 +23,44 @@ import spray.json._
 import com.sanoma.cda.geoip.MaxMindIpGeo
 
 object HttpApiActor {
-  def props(geoIp: MaxMindIpGeo) = Props(new HttpApiActor(geoIp))
+  def props(storage: ActorRef) = Props(new HttpApiActor(storage))
 
   case object Ping
   case object Pong
-  case class Location(name: String, lat: Double, long: Double)
-  case class HttpEvent(protocol: String, time: Long, location: Location)
 }
-class HttpApiActor(geoIp: MaxMindIpGeo) extends Actor
-    with ActorLogging
-    with SprayJsonSupport
-    with DefaultJsonProtocol {
+
+class HttpApiActor(val storage: ActorRef) extends Actor
+    with Routes
+    with ActorLogging {
   import HttpApiActor._
 
   context.system.eventStream.subscribe(self, classOf[Event])
 
   implicit val executor = context.system.dispatcher
   implicit val materializer = ActorMaterializer()
-  var events: Seq[HttpEvent] = Seq()
-
-  implicit val locationFormat = jsonFormat3(Location.apply)
-  implicit val httpEventFormat = jsonFormat3(HttpEvent.apply)
-
-  val routes = path("events") {
-    get {
-      complete(StatusCodes.OK, events)
-    }
-  } ~ pathPrefix("static") {
-    getFromResourceDirectory("static")
-  }
 
   Http(context.system).bindAndHandle(routes, "0.0.0.0", port = 5431)
     .foreach(binding => log.info("Bound to " + binding))
 
   override def receive: Receive = {
     case Ping => sender() ! Pong
-    case Event(protocol, remote, local) =>
-      val location = geoIp.getLocation(remote.getAddress.getHostAddress)
-      val name = location.map(loc => loc.city.map(_ + ", ").getOrElse("") + loc.region.map(_ + ", ").getOrElse("") + loc.countryName.getOrElse("")).getOrElse("")
-      val l = location
-        .flatMap(_.geoPoint)
-        .map(point => Location(name, point.latitude, point.longitude))
-        .getOrElse(Location(name, 40.4274, -111.9341))
-      events = HttpEvent(protocol.getOrElse(s"port ${remote.getPort}"), System.currentTimeMillis, l) +:
-        events.filter(_.time > (System.currentTimeMillis - 200000))
+  }
+}
+
+trait Routes extends StorageProvider
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
+  implicit val locationFormat = jsonFormat3(Storage.Location.apply)
+  implicit val httpEventFormat = jsonFormat3(Storage.HttpEvent.apply)
+  implicit val timeout: Timeout = 5 seconds
+
+  val routes = path("events") {
+    get {
+      onSuccess(storage ? Storage.Get) { events =>
+        complete(StatusCodes.OK, events.asInstanceOf[Seq[Storage.HttpEvent]])
+      }
+    }
+  } ~ pathPrefix("static") {
+    getFromResourceDirectory("static")
   }
 }

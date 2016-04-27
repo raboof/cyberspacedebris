@@ -29,8 +29,9 @@ class MainActor extends Actor
   implicit val timeout: Timeout = 15 seconds
 
   val geoIp = new MaxMindIpGeo(getClass.getResourceAsStream("/maxmind/GeoLite2-City.mmdb"), synchronized = true)
+  val storage = context.actorOf(Props(new Storage(geoIp)))
 
-  Await.result(context.actorOf(HttpApiActor.props(geoIp)) ? HttpApiActor.Ping, 5 seconds)
+  Await.result(context.actorOf(HttpApiActor.props(storage)) ? HttpApiActor.Ping, 5 seconds)
 
   val manager = IO(Tcp)
   val futures = Range(1, 65000)
