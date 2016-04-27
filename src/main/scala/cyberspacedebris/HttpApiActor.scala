@@ -61,6 +61,7 @@ class HttpApiActor(geoIp: MaxMindIpGeo) extends Actor
         .flatMap(_.geoPoint)
         .map(point => Location(name, point.latitude, point.longitude))
         .getOrElse(Location(name, 40.4274, -111.9341))
-      events = HttpEvent(protocol.getOrElse(s"port ${remote.getPort}"), System.currentTimeMillis, l) +: events
+      events = HttpEvent(protocol.getOrElse(s"port ${remote.getPort}"), System.currentTimeMillis, l) +:
+        events.filter(_.time > (System.currentTimeMillis - 200000))
   }
 }
