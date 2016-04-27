@@ -1,5 +1,7 @@
 package cyberspacedebris
 
+import java.net.InetSocketAddress
+
 import scala.concurrent.duration._
 
 import akka.actor._
@@ -49,7 +51,14 @@ trait Routes extends StorageProvider
     with SprayJsonSupport
     with DefaultJsonProtocol {
   implicit val locationFormat = jsonFormat3(Storage.Location.apply)
-  implicit val eventFormat = jsonFormat4(Storage.StoredEvent.apply)
+  implicit val addrFormat = lift(new JsonWriter[InetSocketAddress]() {
+    def write(addr: InetSocketAddress) = JsString(addr.toString)
+  })
+  implicit val eventFormat = lift(new JsonWriter[Storage.StoredEvent]() {
+    def write(evt: Storage.StoredEvent) =
+      JsObject(jsonFormat6(Storage.StoredEvent.apply).write(evt).asJsObject.fields ++
+        evt.data.map(d => "data_as_str" -> JsString(new String(d))))
+  })
   implicit val timeout: Timeout = 5 seconds
 
   val routes = path("events") {

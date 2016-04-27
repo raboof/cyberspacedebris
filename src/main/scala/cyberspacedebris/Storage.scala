@@ -1,5 +1,7 @@
 package cyberspacedebris
 
+import java.net.InetSocketAddress
+
 import akka.actor._
 import akka.persistence._
 
@@ -8,7 +10,7 @@ import com.sanoma.cda.geoip.MaxMindIpGeo
 object Storage {
   case object Get
   case class Location(name: String, lat: Double, long: Double)
-  case class StoredEvent(protocol: String, time: Long, location: Location, data: Option[Array[Byte]])
+  case class StoredEvent(remote: InetSocketAddress, local: InetSocketAddress, protocol: String, time: Long, location: Location, data: Option[Array[Byte]])
 }
 class Storage(geoIp: MaxMindIpGeo) extends PersistentActor {
   import Storage._
@@ -28,7 +30,7 @@ class Storage(geoIp: MaxMindIpGeo) extends PersistentActor {
         .flatMap(_.geoPoint)
         .map(point => Location(name, point.latitude, point.longitude))
         .getOrElse(Location(name, 40.4274, -111.9341))
-      persist(StoredEvent(protocol.getOrElse(s"port ${remote.getPort}"), System.currentTimeMillis, l, data)) { event =>
+      persist(StoredEvent(remote, local, protocol.getOrElse(s"port ${remote.getPort}"), System.currentTimeMillis, l, data)) { event =>
         updateState(event)
       }
   }
