@@ -39,7 +39,7 @@ class Storage(geoIp: MaxMindIpGeo) extends PersistentActor {
 
   def updateState(event: StoredEvent) = {
     println(s"Adding $event")
-    events = event +: events.filter(_.time > (System.currentTimeMillis - 200000))
+    events = event +: events.filter(_.time > (System.currentTimeMillis - 200 * 1000000))
   }
 }
 
