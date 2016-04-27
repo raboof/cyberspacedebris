@@ -52,7 +52,6 @@ class ConnectionActor(remote: InetSocketAddress, local: InetSocketAddress, conne
       val proto = prefixes
         .find { case (prefix, protocol) => data.startsWith(prefix) }
         .map { case (_, protocol) => protocol }
-      report(proto)
       response(local.getPort, proto)._1.foreach(
         (fast: String) => connection ! Write(ByteString(fast))
       )

@@ -34,8 +34,6 @@ class HttpApiActor(val storage: ActorRef) extends Actor
     with ActorLogging {
   import HttpApiActor._
 
-  context.system.eventStream.subscribe(self, classOf[Event])
-
   implicit val executor = context.system.dispatcher
   implicit val materializer = ActorMaterializer()
 
@@ -51,13 +49,13 @@ trait Routes extends StorageProvider
     with SprayJsonSupport
     with DefaultJsonProtocol {
   implicit val locationFormat = jsonFormat3(Storage.Location.apply)
-  implicit val httpEventFormat = jsonFormat3(Storage.HttpEvent.apply)
+  implicit val eventFormat = jsonFormat3(Storage.StoredEvent.apply)
   implicit val timeout: Timeout = 5 seconds
 
   val routes = path("events") {
     get {
       onSuccess(storage ? Storage.Get) { events =>
-        complete(StatusCodes.OK, events.asInstanceOf[Seq[Storage.HttpEvent]])
+        complete(StatusCodes.OK, events.asInstanceOf[Seq[Storage.StoredEvent]])
       }
     }
   } ~ pathPrefix("static") {
