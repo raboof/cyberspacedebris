@@ -28,8 +28,7 @@
       var dotMaterial = new THREE.MeshBasicMaterial({ color: 0xe234da });
 
       function refreshDots(olddots) {
-        $.getJSON("http://54.194.45.239:5431/events", function(data) {
-        //$.getJSON("/events", function(data) {
+        $.getJSON("/events", function(data) {
             for (var i = 0; i < olddots.length; i++) {
               var byname = scene.getObjectByName(olddots[i].name);
               byname.position.x = 210;
